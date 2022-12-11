@@ -1,4 +1,0 @@
-**/*.plan
-**/providers/*
-**/*.tfstate*
-**/*.lock.hcl
