@@ -1,6 +1,12 @@
 # kind_cluster.tf
 
+# https://registry.terraform.io/providers/justenwalker/kind/0.17.0
+# https://github.com/justenwalker/terraform-provider-kind/blob/main/docs/index.md
+# https://github.com/justenwalker/terraform-provider-kind/blob/main/docs/resources/cluster.md
 provider "kind" {
+  provider   = "docker"
+  # kubeconfig = pathexpand("~/.kube/kind-config")
+  kubeconfig = pathexpand(var.kind_cluster_config_path)
 }
 
 provider "kubernetes" {
@@ -8,32 +14,15 @@ provider "kubernetes" {
 }
 
 resource "kind_cluster" "default" {
-  name            = var.kind_cluster_name
-  kubeconfig_path = pathexpand(var.kind_cluster_config_path)
-  wait_for_ready  = true
-
-  kind_config {
-    kind        = "Cluster"
-    api_version = "kind.x-k8s.io/v1alpha4"
-
-    node {
-      role = "control-plane"
-
-      kubeadm_config_patches = [
-        "kind: InitConfiguration\nnodeRegistration:\n  kubeletExtraArgs:\n    node-labels: \"ingress-ready=true\"\n"
-      ]
-      extra_port_mappings {
-        container_port = 80
-        host_port      = 80
-      }
-      extra_port_mappings {
-        container_port = 443
-        host_port      = 443
-      }
-    }
-
-    node {
-      role = "worker"
-    }
-  }
+  #(String) the name of the cluster. corresponds to the --name flag on the kind cli
+  name = var.kind_cluster_name
+  #  (String) the cluster config as documented on https://kind.sigs.k8s.io/docs/user/configuration/
+  config = <<-EOF
+        apiVersion: kind.x-k8s.io/v1alpha4
+        kind: Cluster
+        nodes:
+        - role: control-plane
+        - role: worker
+        - role: worker
+	EOF
 }
